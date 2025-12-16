@@ -2,7 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { usersDB } from '../utils/db.js';
+import prisma from '../utils/prisma.js';
 import { generateToken, protect } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
@@ -19,7 +19,9 @@ router.post('/login', [
   try {
     const { username, password } = req.body;
 
-    const user = usersDB.findOne({ username: username.toLowerCase() });
+    const user = await prisma.user.findUnique({
+      where: { username: username.toLowerCase() }
+    });
     
     if (!user || !user.isActive) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -32,7 +34,10 @@ router.post('/login', [
     }
 
     // Update last login
-    usersDB.update(user.id, { lastLogin: new Date().toISOString() });
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() }
+    });
 
     const token = generateToken(user.id);
 
@@ -47,6 +52,7 @@ router.post('/login', [
       expiresIn: 30 * 24 * 60 * 60 * 1000 // 30 days in milliseconds
     });
   } catch (error) {
+    console.error('Login error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
@@ -55,12 +61,25 @@ router.post('/login', [
 // @desc    Get current user
 // @access  Private
 router.get('/me', protect, async (req, res) => {
-  res.json({
-    id: req.user.id,
-    username: req.user.username,
-    role: req.user.role,
-    email: req.user.email
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json({
+      id: user.id,
+      username: user.username,
+      role: user.role,
+      email: user.email
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
 });
 
 // @route   POST /api/auth/refresh
