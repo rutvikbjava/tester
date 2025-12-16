@@ -5,10 +5,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const DATA_DIR = path.join(__dirname, '../data');
+// Only initialize directories in non-serverless environments
+let DATA_DIR;
 
-// Ensure data directory exists (only in non-serverless environments)
 if (process.env.VERCEL !== '1') {
+  DATA_DIR = path.join(__dirname, '../data');
+  
+  // Ensure data directory exists
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
@@ -33,6 +36,9 @@ if (process.env.VERCEL !== '1') {
   };
 
   initializeDataFiles();
+} else {
+  // On Vercel, set a dummy path (won't be used)
+  DATA_DIR = '/tmp/data';
 }
 
 // Database operations

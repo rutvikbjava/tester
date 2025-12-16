@@ -6,10 +6,17 @@ import fs from 'fs';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure uploads directory exists (only in non-serverless environments)
-const uploadsDir = path.join(__dirname, '../uploads');
-if (process.env.VERCEL !== '1' && !fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+// Only create uploads directory in non-serverless environments
+let uploadsDir;
+
+if (process.env.VERCEL !== '1') {
+  uploadsDir = path.join(__dirname, '../uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} else {
+  // On Vercel, set a dummy path (won't be used with memory storage)
+  uploadsDir = '/tmp/uploads';
 }
 
 // Configure storage (use memory storage on Vercel for Supabase upload)

@@ -5,11 +5,18 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const logsDir = path.join(__dirname, '../logs');
+// Only create logs directory in non-serverless environments
+let logsDir;
 
-// Ensure logs directory exists
-if (!fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir, { recursive: true });
+if (process.env.VERCEL !== '1') {
+  logsDir = path.join(__dirname, '../logs');
+  // Ensure logs directory exists
+  if (!fs.existsSync(logsDir)) {
+    fs.mkdirSync(logsDir, { recursive: true });
+  }
+} else {
+  // On Vercel, use /tmp for logs (ephemeral)
+  logsDir = '/tmp/logs';
 }
 
 const getLogFileName = () => {
@@ -27,26 +34,38 @@ export const logger = {
   info: (message, meta) => {
     const log = formatLog('INFO', message, meta);
     console.log(log.trim());
-    fs.appendFileSync(getLogFileName(), log);
+    // Only write to file in non-serverless environments
+    if (process.env.VERCEL !== '1') {
+      fs.appendFileSync(getLogFileName(), log);
+    }
   },
 
   error: (message, meta) => {
     const log = formatLog('ERROR', message, meta);
     console.error(log.trim());
-    fs.appendFileSync(getLogFileName(), log);
+    // Only write to file in non-serverless environments
+    if (process.env.VERCEL !== '1') {
+      fs.appendFileSync(getLogFileName(), log);
+    }
   },
 
   warn: (message, meta) => {
     const log = formatLog('WARN', message, meta);
     console.warn(log.trim());
-    fs.appendFileSync(getLogFileName(), log);
+    // Only write to file in non-serverless environments
+    if (process.env.VERCEL !== '1') {
+      fs.appendFileSync(getLogFileName(), log);
+    }
   },
 
   debug: (message, meta) => {
     if (process.env.NODE_ENV === 'development') {
       const log = formatLog('DEBUG', message, meta);
       console.debug(log.trim());
-      fs.appendFileSync(getLogFileName(), log);
+      // Only write to file in non-serverless environments
+      if (process.env.VERCEL !== '1') {
+        fs.appendFileSync(getLogFileName(), log);
+      }
     }
   }
 };
