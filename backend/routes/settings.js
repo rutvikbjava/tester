@@ -1,5 +1,5 @@
 import express from 'express';
-import { settingsDB } from '../utils/db.js';
+import prisma from '../utils/prisma.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -9,8 +9,15 @@ const router = express.Router();
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    const settings = settingsDB.read();
-    res.json(settings);
+    const settings = await prisma.setting.findMany();
+    
+    // Convert to key-value object format
+    const settingsObj = settings.reduce((acc, setting) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    }, {});
+    
+    res.json(settingsObj);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -21,14 +28,15 @@ router.get('/', protect, async (req, res) => {
 // @access  Private
 router.get('/:key', protect, async (req, res) => {
   try {
-    const settings = settingsDB.read();
-    const value = settings[req.params.key];
+    const setting = await prisma.setting.findUnique({
+      where: { key: req.params.key }
+    });
     
-    if (value === undefined) {
+    if (!setting) {
       return res.status(404).json({ message: 'Setting not found' });
     }
     
-    res.json({ key: req.params.key, value });
+    res.json({ key: setting.key, value: setting.value });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -41,11 +49,13 @@ router.put('/:key', [protect, adminOnly], async (req, res) => {
   try {
     const { value, description } = req.body;
 
-    const settings = settingsDB.read();
-    settings[req.params.key] = value;
-    settingsDB.write(settings);
+    const setting = await prisma.setting.upsert({
+      where: { key: req.params.key },
+      update: { value, description },
+      create: { key: req.params.key, value, description }
+    });
 
-    res.json({ key: req.params.key, value, description });
+    res.json({ key: setting.key, value: setting.value, description: setting.description });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }

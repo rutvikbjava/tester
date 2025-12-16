@@ -1,5 +1,5 @@
 import express from 'express';
-import { landingPageDB } from '../utils/db.js';
+import prisma from '../utils/prisma.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -9,10 +9,13 @@ const router = express.Router();
 // @access  Public
 router.get('/', async (req, res) => {
   try {
-    let landingPage = landingPageDB.read();
+    let landingPage = await prisma.setting.findUnique({
+      where: { key: 'landingPage' }
+    });
     
-    if (!landingPage || Object.keys(landingPage).length === 0) {
-      landingPage = {
+    if (!landingPage) {
+      // Return default landing page content
+      const defaultContent = {
         hero: {
           title: 'Welcome to MAGIC',
           subtitle: 'Empowering Startups in Marathwada',
@@ -23,9 +26,11 @@ router.get('/', async (req, res) => {
         testimonials: [],
         contact: {}
       };
+      
+      return res.json(defaultContent);
     }
 
-    res.json(landingPage);
+    res.json(JSON.parse(landingPage.value));
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -36,7 +41,14 @@ router.get('/', async (req, res) => {
 // @access  Private (Admin only)
 router.put('/', [protect, adminOnly], async (req, res) => {
   try {
-    landingPageDB.write(req.body);
+    const content = JSON.stringify(req.body);
+    
+    await prisma.setting.upsert({
+      where: { key: 'landingPage' },
+      update: { value: content },
+      create: { key: 'landingPage', value: content, description: 'Landing page content' }
+    });
+    
     res.json(req.body);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });

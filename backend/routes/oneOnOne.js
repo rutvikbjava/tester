@@ -1,5 +1,5 @@
 import express from 'express';
-import { oneOnOneSessionsDB, startupsDB } from '../utils/db.js';
+import prisma from '../utils/prisma.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -10,24 +10,19 @@ const router = express.Router();
 router.get('/', protect, async (req, res) => {
   try {
     const { status } = req.query;
-    let sessions = oneOnOneSessionsDB.findAll();
+    
+    const where = {};
+    if (status) where.status = status;
 
-    if (status) {
-      sessions = sessions.filter(s => s.status === status);
-    }
-
-    // Populate startup data
-    sessions = sessions.map(session => {
-      const startup = startupsDB.findById(session.startupId);
-      return {
-        ...session,
-        startup: startup || null
-      };
-    });
-
-    sessions.sort((a, b) => {
-      if (a.date !== b.date) return a.date.localeCompare(b.date);
-      return a.time.localeCompare(b.time);
+    const sessions = await prisma.oneOnOneMeeting.findMany({
+      where,
+      include: {
+        startup: true
+      },
+      orderBy: [
+        { date: 'asc' },
+        { time: 'asc' }
+      ]
     });
 
     res.json(sessions);
@@ -41,19 +36,28 @@ router.get('/', protect, async (req, res) => {
 // @access  Private (Admin only)
 router.post('/', [protect, adminOnly], async (req, res) => {
   try {
-    const session = oneOnOneSessionsDB.create({
-      ...req.body,
-      startupId: req.body.startup || req.body.startupId,
-      status: 'Scheduled',
-      feedback: '',
-      progress: ''
+    const startupId = req.body.startup || req.body.startupId;
+    
+    const session = await prisma.oneOnOneMeeting.create({
+      data: {
+        startupId,
+        date: new Date(req.body.date),
+        time: req.body.time,
+        mentorName: req.body.mentorName || '',
+        status: 'Scheduled',
+        feedback: '',
+        progress: ''
+      },
+      include: {
+        startup: true
+      }
     });
 
     // Update startup stage to One-on-One
-    startupsDB.update(session.startupId, { stage: 'One-on-One' });
-
-    // Populate startup data
-    session.startup = startupsDB.findById(session.startupId);
+    await prisma.startup.update({
+      where: { id: startupId },
+      data: { stage: 'One-on-One' }
+    });
 
     res.status(201).json(session);
   } catch (error) {
@@ -68,35 +72,27 @@ router.put('/:id/complete', [protect, adminOnly], async (req, res) => {
   try {
     const { feedback, progress } = req.body;
 
-    const session = oneOnOneSessionsDB.findById(req.params.id);
+    const session = await prisma.oneOnOneMeeting.findUnique({
+      where: { id: req.params.id }
+    });
+    
     if (!session) {
       return res.status(404).json({ message: 'Session not found' });
     }
 
     // Update session
-    const updatedSession = oneOnOneSessionsDB.update(req.params.id, {
-      status: 'Completed',
-      feedback,
-      progress,
-      completedAt: new Date().toISOString()
-    });
-
-    // Update startup one-on-one history
-    const startup = startupsDB.findById(session.startupId);
-    if (startup) {
-      startup.oneOnOneHistory = startup.oneOnOneHistory || [];
-      startup.oneOnOneHistory.push({
-        date: session.date,
-        time: session.time,
-        mentorName: session.mentorName,
+    const updatedSession = await prisma.oneOnOneMeeting.update({
+      where: { id: req.params.id },
+      data: {
+        status: 'Completed',
         feedback,
-        progress
-      });
-      startupsDB.update(startup.id, startup);
-    }
-
-    // Populate startup data
-    updatedSession.startup = startupsDB.findById(session.startupId);
+        progress,
+        completedAt: new Date()
+      },
+      include: {
+        startup: true
+      }
+    });
 
     res.json(updatedSession);
   } catch (error) {
@@ -109,12 +105,15 @@ router.put('/:id/complete', [protect, adminOnly], async (req, res) => {
 // @access  Private (Admin only)
 router.delete('/:id', [protect, adminOnly], async (req, res) => {
   try {
-    const deleted = oneOnOneSessionsDB.delete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Session not found' });
-    }
+    await prisma.oneOnOneMeeting.delete({
+      where: { id: req.params.id }
+    });
+    
     res.json({ message: 'Session deleted successfully' });
   } catch (error) {
+    if (error.code === 'P2025') {
+      return res.status(404).json({ message: 'Session not found' });
+    }
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 });

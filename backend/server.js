@@ -182,33 +182,38 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, async () => {
-  try {
-    // Test database connection
-    await prisma.$queryRaw`SELECT 1`;
-    console.log('✅ PostgreSQL database connected');
-  } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
-    console.error('   Check your DATABASE_URL in .env file');
-  }
-  
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 API: http://localhost:${PORT}/api`);
-  console.log(`🏥 Health: http://localhost:${PORT}/health`);
-  console.log(`💾 Storage: PostgreSQL Database`);
-});
+// Start server (only in non-serverless environments)
+if (process.env.VERCEL !== '1') {
+  app.listen(PORT, async () => {
+    try {
+      // Test database connection
+      await prisma.$queryRaw`SELECT 1`;
+      console.log('✅ PostgreSQL database connected');
+    } catch (error) {
+      console.error('❌ Database connection failed:', error.message);
+      console.error('   Check your DATABASE_URL in .env file');
+    }
+    
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🌐 API: http://localhost:${PORT}/api`);
+    console.log(`🏥 Health: http://localhost:${PORT}/health`);
+    console.log(`💾 Storage: PostgreSQL Database`);
+  });
 
-// Graceful shutdown
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, closing server...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+  // Graceful shutdown
+  process.on('SIGTERM', async () => {
+    console.log('SIGTERM received, closing server...');
+    await prisma.$disconnect();
+    process.exit(0);
+  });
 
-process.on('SIGINT', async () => {
-  console.log('\nSIGINT received, closing server...');
-  await prisma.$disconnect();
-  process.exit(0);
-});
+  process.on('SIGINT', async () => {
+    console.log('\nSIGINT received, closing server...');
+    await prisma.$disconnect();
+    process.exit(0);
+  });
+}
+
+// Export for Vercel serverless
+export default app;
