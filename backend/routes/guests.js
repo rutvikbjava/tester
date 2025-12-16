@@ -1,7 +1,7 @@
 import express from 'express';
 import { body } from 'express-validator';
 import bcrypt from 'bcryptjs';
-import { usersDB } from '../utils/db.js';
+import prisma from '../utils/prisma.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 
@@ -12,7 +12,18 @@ const router = express.Router();
 // @access  Private (Admin only)
 router.get('/', [protect, adminOnly], async (req, res) => {
   try {
-    const guests = usersDB.findAll({ role: 'guest' }).map(({ password, ...user }) => user);
+    const guests = await prisma.user.findMany({
+      where: { role: 'guest' },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        lastLogin: true
+      }
+    });
     res.json(guests);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -32,23 +43,34 @@ router.post('/', [
   try {
     const { username, password, email } = req.body;
 
-    const existingUser = usersDB.findOne({ username: username.toLowerCase() });
+    const existingUser = await prisma.user.findUnique({
+      where: { username: username.toLowerCase() }
+    });
     if (existingUser) {
       return res.status(400).json({ message: 'Username already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const guest = usersDB.create({
-      username: username.toLowerCase(),
-      password: hashedPassword,
-      email,
-      role: 'guest',
-      isActive: true
+    const guest = await prisma.user.create({
+      data: {
+        username: username.toLowerCase(),
+        password: hashedPassword,
+        email,
+        role: 'guest',
+        isActive: true
+      },
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true
+      }
     });
 
-    const { password: _, ...guestWithoutPassword } = guest;
-    res.status(201).json(guestWithoutPassword);
+    res.status(201).json(guest);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -61,7 +83,9 @@ router.put('/:id', [protect, adminOnly], async (req, res) => {
   try {
     const { username, email, isActive } = req.body;
 
-    const guest = usersDB.findById(req.params.id);
+    const guest = await prisma.user.findUnique({
+      where: { id: req.params.id }
+    });
     if (!guest || guest.role !== 'guest') {
       return res.status(404).json({ message: 'Guest not found' });
     }
@@ -71,10 +95,21 @@ router.put('/:id', [protect, adminOnly], async (req, res) => {
     if (email !== undefined) updates.email = email;
     if (typeof isActive !== 'undefined') updates.isActive = isActive;
 
-    const updated = usersDB.update(req.params.id, updates);
-    const { password, ...guestWithoutPassword } = updated;
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: updates,
+      select: {
+        id: true,
+        username: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        lastLogin: true
+      }
+    });
 
-    res.json(guestWithoutPassword);
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
   }
@@ -85,12 +120,16 @@ router.put('/:id', [protect, adminOnly], async (req, res) => {
 // @access  Private (Admin only)
 router.delete('/:id', [protect, adminOnly], async (req, res) => {
   try {
-    const guest = usersDB.findById(req.params.id);
+    const guest = await prisma.user.findUnique({
+      where: { id: req.params.id }
+    });
     if (!guest || guest.role !== 'guest') {
       return res.status(404).json({ message: 'Guest not found' });
     }
 
-    usersDB.delete(req.params.id);
+    await prisma.user.delete({
+      where: { id: req.params.id }
+    });
     res.json({ message: 'Guest deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error', error: error.message });
