@@ -6,23 +6,36 @@ All critical fixes have been applied. You can deploy now.
 
 ---
 
-## 🎯 QUICK START (3 Steps)
+## 🎯 QUICK START (4 Steps)
 
 ### Step 1: Verify
 ```bash
 VERIFY_VERCEL_READY.bat
 ```
 
-### Step 2: Push to GitHub
+### Step 2: Import Environment Variables
+**Option A - Automated (Recommended):**
+```bash
+IMPORT_ENV_TO_VERCEL.bat
+```
+
+**Option B - Manual:**
+1. Go to Vercel Dashboard → Settings → Environment Variables
+2. Click "Bulk Edit"
+3. Copy from `ENV_VARIABLES_VERCEL.txt`
+4. Paste and save
+
+See `VERCEL_ENV_IMPORT_GUIDE.md` for detailed instructions.
+
+### Step 3: Push to GitHub
 ```bash
 DEPLOY_TO_VERCEL.bat
 ```
 
-### Step 3: Deploy on Vercel
+### Step 4: Deploy on Vercel
 1. Go to [vercel.com](https://vercel.com)
 2. Import your repository
-3. Add environment variables (see `ENV_VARIABLES_VERCEL.txt`)
-4. Click Deploy
+3. Click Deploy (env vars already set!)
 
 ---
 
