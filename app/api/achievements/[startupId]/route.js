@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+// Force dynamic rendering - prevent build-time database access
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 // POST /api/achievements/:startupId - Add achievement
 export const POST = requireAuth(async (request, { params }) => {
   try {

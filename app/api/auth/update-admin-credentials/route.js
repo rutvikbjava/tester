@@ -3,6 +3,11 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { requireRole } from '@/lib/auth';
 
+// Force dynamic rendering - prevent build-time database access
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 // PUT /api/auth/update-admin-credentials - Update admin email and/or password
 export const PUT = requireRole(['admin'])(async (request) => {
   try {

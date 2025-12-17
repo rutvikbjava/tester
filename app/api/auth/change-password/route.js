@@ -3,6 +3,11 @@ import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 
+// Force dynamic rendering - prevent build-time database access
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 export const POST = requireAuth(async (request) => {
   try {
     const { currentPassword, newPassword } = await request.json();

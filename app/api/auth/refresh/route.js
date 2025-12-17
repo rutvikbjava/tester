@@ -3,6 +3,11 @@ import jwt from 'jsonwebtoken';
 import prisma from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 
+// Force dynamic rendering - prevent build-time database access
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 export async function POST(request) {
