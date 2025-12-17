@@ -1,0 +1,72 @@
+========================================
+VERCEL ENVIRONMENT VARIABLES
+COPY-PASTE READY FORMAT
+========================================
+
+Go to: Vercel Dashboard → Settings → Environment Variables
+Add each variable below (check Production, Preview, Development for all)
+
+========================================
+1. DATABASE_URL
+========================================
+postgresql://postgres.cvaaeqrbblwwmcchdadl:ShivamRP55623ll7321@aws-0-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true
+
+========================================
+2. DIRECT_URL
+========================================
+postgresql://postgres.cvaaeqrbblwwmcchdadl:ShivamRP55623ll7321@aws-0-ap-south-1.pooler.supabase.com:5432/postgres
+
+========================================
+3. JWT_SECRET
+========================================
+magic_incubation_super_secure_jwt_secret_2024_production
+
+========================================
+4. JWT_EXPIRE
+========================================
+30d
+
+========================================
+5. NODE_ENV (Production only)
+========================================
+production
+
+========================================
+6. SUPABASE_URL
+========================================
+https://cvaaeqrbblwwmcchdadl.supabase.co
+
+========================================
+7. SUPABASE_ANON_KEY
+========================================
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2YWFlcXJiYmx3d21jY2hkYWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NTcwMzIsImV4cCI6MjA4MTUzMzAzMn0.kBEZcsQG3_R8S4D4QvNiAfhdqgqDwrHGWLSna_bVl1E
+
+========================================
+8. NEXT_PUBLIC_SUPABASE_URL
+========================================
+https://cvaaeqrbblwwmcchdadl.supabase.co
+
+========================================
+9. NEXT_PUBLIC_SUPABASE_ANON_KEY
+========================================
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2YWFlcXJiYmx3d21jY2hkYWRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NTcwMzIsImV4cCI6MjA4MTUzMzAzMn0.kBEZcsQG3_R8S4D4QvNiAfhdqgqDwrHGWLSna_bVl1E
+
+========================================
+AFTER ADDING ALL VARIABLES:
+========================================
+1. Click "Save" for each variable
+2. Go to Deployments tab
+3. Click "Redeploy" on latest deployment
+4. Wait for build to complete
+5. Test: https://your-domain.vercel.app/api/auth/login
+
+========================================
+CRITICAL NOTES:
+========================================
+✅ Use port 6543 for DATABASE_URL (pooler)
+✅ Use port 5432 for DIRECT_URL (direct)
+✅ Check all 3 environments: Production, Preview, Development
+✅ MUST redeploy after adding variables
+❌ Variables do NOT auto-reload without redeploy
+
+========================================
