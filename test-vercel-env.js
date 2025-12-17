@@ -1,7 +1,20 @@
 /**
  * Test script to verify environment variables are set correctly
  * Run this locally to ensure all required variables are present
+ * 
+ * Usage: node test-vercel-env.js
+ * Note: This will load from .env.production file
  */
+
+// Load environment variables from .env.production
+import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+config({ path: join(__dirname, '.env.production') });
 
 console.log('🔍 Checking Environment Variables...\n');
 
