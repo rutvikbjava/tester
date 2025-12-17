@@ -1,5 +1,7 @@
 // API client for backend communication with RBAC
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Use Next.js API routes (same domain)
+const API_URL = '/api';
+console.log('API_URL configured as:', API_URL);
 
 class ApiClient {
   constructor() {
@@ -54,6 +56,7 @@ class ApiClient {
   // Make API request
   async request(endpoint, options = {}) {
     const url = `${API_URL}${endpoint}`;
+    console.log('API Request:', url); // Debug log
     const config = {
       ...options,
       headers: {
@@ -64,6 +67,14 @@ class ApiClient {
 
     try {
       const response = await fetch(url, config);
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('Non-JSON response received:', response.status, response.statusText);
+        throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
 
       if (!response.ok) {

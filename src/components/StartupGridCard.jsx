@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { MapPin, User, Briefcase, Calendar, Trash2 } from 'lucide-react';
 import GuestRestrictedButton from './GuestRestrictedButton';
+import { getField } from '../utils/startupFieldHelper';
 
 export default function StartupGridCard({ startup, onUpdate, onDelete, onClick, isGuest = false, isCompact = false }) {
   const getStageColor = (stage) => {
@@ -38,19 +39,19 @@ export default function StartupGridCard({ startup, onUpdate, onDelete, onClick, 
         <div className="flex items-start justify-between mb-2">
           <div className="flex items-center space-x-3 flex-1 min-w-0">
             {/* Logo Display */}
-            {startup.logo && (
+            {getField(startup, 'logo') && (
               <div className={`${isCompact ? 'w-10 h-10' : 'w-12 h-12'} flex-shrink-0 bg-white rounded-lg p-1 shadow-md`}>
                 <img 
-                  src={startup.logo} 
-                  alt={`${startup.companyName} logo`}
+                  src={getField(startup, 'logo')} 
+                  alt={`${getField(startup, 'companyName')} logo`}
                   className="w-full h-full object-contain rounded"
                   onError={(e) => e.target.style.display = 'none'}
                 />
               </div>
             )}
             <div className="flex-1 min-w-0">
-              <h3 className={`${isCompact ? 'text-sm sm:text-base' : 'text-lg sm:text-xl'} truncate mb-1 card-text text-black`}>{startup.companyName}</h3>
-              <p className={`${isCompact ? 'text-xs' : 'text-xs sm:text-sm'} text-white/80 truncate card-text text-black`}>{startup.magicCode}</p>
+              <h3 className={`${isCompact ? 'text-sm sm:text-base' : 'text-lg sm:text-xl'} truncate mb-1 card-text text-black`}>{getField(startup, 'companyName')}</h3>
+              <p className={`${isCompact ? 'text-xs' : 'text-xs sm:text-sm'} text-white/80 truncate card-text text-black`}>{getField(startup, 'magicCode')}</p>
             </div>
           </div>
           {!isLocked && (
@@ -83,20 +84,20 @@ export default function StartupGridCard({ startup, onUpdate, onDelete, onClick, 
       <div className={`${isCompact ? 'p-2 sm:p-3 space-y-2' : 'p-4 sm:p-5 space-y-3'}`}>
         <div className={`flex items-center space-x-2 ${isCompact ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-gray-400`}>
           <User className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} flex-shrink-0`} />
-          <span className="truncate card-text text-black">{startup.founderName}</span>
+          <span className="truncate card-text text-black">{getField(startup, 'founderName')}</span>
         </div>
         <div className={`flex items-center space-x-2 ${isCompact ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-gray-400`}>
           <MapPin className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} flex-shrink-0`} />
-          <span className="truncate card-text text-black">{startup.city}</span>
+          <span className="truncate card-text text-black">{getField(startup, 'city')}</span>
         </div>
         <div className={`flex items-center space-x-2 ${isCompact ? 'text-xs' : 'text-sm'} text-gray-600 dark:text-gray-400`}>
           <Briefcase className={`${isCompact ? 'w-3 h-3' : 'w-4 h-4'} flex-shrink-0`} />
-          <span className="truncate card-text text-black">{startup.sector}</span>
+          <span className="truncate card-text text-black">{getField(startup, 'sector')}</span>
         </div>
-        {startup.registeredDate && !isCompact && (
+        {getField(startup, 'registeredDate') && !isCompact && (
           <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
             <Calendar className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate card-text text-black">{new Date(startup.registeredDate).toLocaleDateString()}</span>
+            <span className="truncate card-text text-black">{new Date(getField(startup, 'registeredDate')).toLocaleDateString()}</span>
           </div>
         )}
       </div>

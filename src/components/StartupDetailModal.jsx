@@ -7,6 +7,7 @@ import RejectionModal from './RejectionModal';
 import OnboardingModal from './OnboardingModal';
 import GenerateReportButton from './GenerateReportButton';
 import ConfirmationModal from './ConfirmationModal';
+import { getField } from '../utils/startupFieldHelper';
 
 export default function StartupDetailModal({ startup, onClose, onUpdate, isGuest = false }) {
   const [expanded, setExpanded] = useState({
@@ -84,10 +85,11 @@ export default function StartupDetailModal({ startup, onClose, onUpdate, isGuest
   };
 
   const handleOneOnOne = () => {
+    const companyName = getField(startup, 'companyName');
     setConfirmationModal({
       isOpen: true,
       title: 'Move to One-on-One?',
-      message: `Are you sure you want to move "${startup.companyName}" from ${startup.stage} to One-on-One mentorship stage?`,
+      message: `Are you sure you want to move "${companyName}" from ${startup.stage} to One-on-One mentorship stage?`,
       type: 'info',
       onConfirm: () => {
         onUpdate({ ...startup, stage: 'One-on-One' });
@@ -97,10 +99,11 @@ export default function StartupDetailModal({ startup, onClose, onUpdate, isGuest
   };
 
   const handleGraduate = () => {
+    const companyName = getField(startup, 'companyName');
     setConfirmationModal({
       isOpen: true,
       title: 'Graduate Startup?',
-      message: `Are you sure you want to graduate "${startup.companyName}"? This means they have completed their incubation period and will be marked as Graduated.`,
+      message: `Are you sure you want to graduate "${companyName}"? This means they have completed their incubation period and will be marked as Graduated.`,
       type: 'info',
       onConfirm: () => {
         const graduationDate = prompt('Enter graduation date (YYYY-MM-DD) or leave empty for today:');
@@ -175,7 +178,7 @@ export default function StartupDetailModal({ startup, onClose, onUpdate, isGuest
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <h2 className="text-2xl sm:text-3xl font-bold">{startup.companyName}</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold">{getField(startup, 'companyName')}</h2>
                 <span className={`px-2.5 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getStatusColor(startup.status)}`}>
                   {startup.status}
                 </span>
@@ -184,9 +187,9 @@ export default function StartupDetailModal({ startup, onClose, onUpdate, isGuest
                 </span>
               </div>
               <div className="space-y-1 text-sm sm:text-base">
-                <p className="text-white/90">Magic Code: {startup.magicCode}</p>
-                <p className="text-white/90">Founder: {startup.founderName}</p>
-                <p className="text-white/80 text-xs sm:text-sm">{startup.city} • {startup.sector}</p>
+                <p className="text-white/90">Magic Code: {getField(startup, 'magicCode')}</p>
+                <p className="text-white/90">Founder: {getField(startup, 'founderName')}</p>
+                <p className="text-white/80 text-xs sm:text-sm">{getField(startup, 'city')} • {getField(startup, 'sector')}</p>
               </div>
             </div>
             <div className="flex space-x-2 ml-2">
@@ -332,27 +335,27 @@ export default function StartupDetailModal({ startup, onClose, onUpdate, isGuest
 
           <Section title="Startup Information" section="startup">
             {/* Logo and Office Photo Display */}
-            {(startup.logo || startup.officePhoto) && (
+            {(getField(startup, 'logo') || getField(startup, 'officePhoto')) && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                {startup.logo && (
+                {getField(startup, 'logo') && (
                   <div>
                     <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 block mb-2">Startup Logo</span>
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                       <img
-                        src={startup.logo}
-                        alt={`${startup.companyName} Logo`}
+                        src={getField(startup, 'logo')}
+                        alt={`${getField(startup, 'companyName')} Logo`}
                         className="max-h-32 mx-auto object-contain"
                       />
                     </div>
                   </div>
                 )}
-                {startup.officePhoto && (
+                {getField(startup, 'officePhoto') && (
                   <div>
                     <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 block mb-2">Office Photo</span>
                     <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                       <img
-                        src={startup.officePhoto}
-                        alt={`${startup.companyName} Office`}
+                        src={getField(startup, 'officePhoto')}
+                        alt={`${getField(startup, 'companyName')} Office`}
                         className="max-h-32 w-full object-cover rounded"
                       />
                     </div>
@@ -362,37 +365,37 @@ export default function StartupDetailModal({ startup, onClose, onUpdate, isGuest
             )}
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Magic Code" value={startup.magicCode} />
-              <Field label="Company Name" value={startup.companyName} />
-              {startup.dpiitNo && <Field label="DPIIT No." value={startup.dpiitNo} />}
-              {startup.recognitionDate && <Field label="Recognition Date" value={startup.recognitionDate} />}
-              {startup.bhaskarId && <Field label="Bhaskar ID" value={startup.bhaskarId} />}
-              <Field label="City" value={startup.city} />
-              <Field label="Sector" value={startup.sector} />
-              <Field label="Stage of Idea" value={startup.stageOfIdea} />
-              <Field label="Team Size" value={startup.teamSize} />
-              <Field label="Has Patent" value={startup.hasPatent} />
-              {startup.hasPatent === 'Yes' && <Field label="Patent Number" value={startup.patentNumber} />}
-              <Field label="Is Registered" value={startup.isRegistered} />
-              {startup.isRegistered === 'Yes' && <Field label="Registration Date" value={startup.registrationDate} />}
-              <Field label="Website" value={startup.website} />
-              <Field label="Social Media" value={startup.socialMedia} />
+              <Field label="Magic Code" value={getField(startup, 'magicCode')} />
+              <Field label="Company Name" value={getField(startup, 'companyName')} />
+              {getField(startup, 'dpiitNo') && <Field label="DPIIT No." value={getField(startup, 'dpiitNo')} />}
+              {getField(startup, 'recognitionDate') && <Field label="Recognition Date" value={getField(startup, 'recognitionDate')} />}
+              {getField(startup, 'bhaskarId') && <Field label="Bhaskar ID" value={getField(startup, 'bhaskarId')} />}
+              <Field label="City" value={getField(startup, 'city')} />
+              <Field label="Sector" value={getField(startup, 'sector')} />
+              <Field label="Stage of Idea" value={getField(startup, 'stageOfIdea')} />
+              <Field label="Team Size" value={getField(startup, 'teamSize')} />
+              <Field label="Has Patent" value={getField(startup, 'hasPatent')} />
+              {getField(startup, 'hasPatent') === 'Yes' && <Field label="Patent Number" value={getField(startup, 'patentNumber')} />}
+              <Field label="Is Registered" value={getField(startup, 'isRegistered')} />
+              {getField(startup, 'isRegistered') === 'Yes' && <Field label="Registration Date" value={getField(startup, 'registrationDate')} />}
+              <Field label="Website" value={getField(startup, 'website')} />
+              <Field label="Social Media" value={getField(startup, 'socialMedia')} />
             </div>
-            <Field label="Problem Solving" value={startup.problemSolving} />
-            <Field label="Solution" value={startup.solution} />
+            <Field label="Problem Solving" value={getField(startup, 'problemSolving')} />
+            <Field label="Solution" value={getField(startup, 'solution')} />
           </Section>
 
           <Section title="Founder Information" section="founder">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Founder Name" value={startup.founderName} />
-              <Field label="Age" value={startup.founderAge} />
-              <Field label="Gender" value={startup.founderGender} />
-              <Field label="College" value={startup.college} />
-              <Field label="Email" value={startup.email} />
-              <Field label="Mobile" value={startup.mobile} />
-              <Field label="Referred From" value={startup.referredFrom} />
+              <Field label="Founder Name" value={getField(startup, 'founderName')} />
+              <Field label="Age" value={getField(startup, 'founderAge')} />
+              <Field label="Gender" value={getField(startup, 'founderGender')} />
+              <Field label="College" value={getField(startup, 'college')} />
+              <Field label="Email" value={getField(startup, 'founderEmail')} />
+              <Field label="Mobile" value={getField(startup, 'founderMobile')} />
+              <Field label="Referred From" value={getField(startup, 'referredFrom')} />
             </div>
-            <Field label="Address" value={startup.address} />
+            <Field label="Address" value={getField(startup, 'address')} />
           </Section>
 
           <Section title="Registration Info" section="registration">

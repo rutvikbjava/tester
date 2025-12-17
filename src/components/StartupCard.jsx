@@ -6,6 +6,7 @@ import GuestRestrictedButton from './GuestRestrictedButton';
 import RejectionModal from './RejectionModal';
 import OnboardingModal from './OnboardingModal';
 import AdminAuthModal from './AdminAuthModal';
+import { getField } from '../utils/startupFieldHelper';
 
 export default function StartupCard({ startup, onUpdate, onDelete, isGuest = false }) {
   const [expanded, setExpanded] = useState({
@@ -58,10 +59,11 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
   };
 
   const handleOnboard = () => {
+    const companyName = getField(startup, 'companyName');
     setAdminAuthModal({
       isOpen: true,
       title: 'Onboard Startup',
-      message: `You are about to onboard "${startup.companyName}". This will change the startup status to Onboarded. Please authenticate to proceed.`,
+      message: `You are about to onboard "${companyName}". This will change the startup status to Onboarded. Please authenticate to proceed.`,
       actionType: 'info',
       onConfirm: () => {
         setShowOnboardingModal(true);
@@ -102,10 +104,11 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
   };
 
   const handleOneOnOne = () => {
+    const companyName = getField(startup, 'companyName');
     setAdminAuthModal({
       isOpen: true,
       title: 'Move to One-on-One',
-      message: `You are about to move "${startup.companyName}" to One-on-One mentorship stage. Please authenticate to proceed.`,
+      message: `You are about to move "${companyName}" to One-on-One mentorship stage. Please authenticate to proceed.`,
       actionType: 'info',
       onConfirm: () => {
         onUpdate({ ...startup, stage: 'One-on-One' });
@@ -149,10 +152,11 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
   };
 
   const handleGraduate = () => {
+    const companyName = getField(startup, 'companyName');
     setAdminAuthModal({
       isOpen: true,
       title: 'Graduate Startup',
-      message: `You are about to graduate "${startup.companyName}". This will lock the startup and mark it as completed. Please authenticate to proceed.`,
+      message: `You are about to graduate "${companyName}". This will lock the startup and mark it as completed. Please authenticate to proceed.`,
       actionType: 'info',
       onConfirm: () => {
         onUpdate({ ...startup, status: 'Graduated', graduatedDate: new Date().toISOString() });
@@ -220,11 +224,11 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-start space-x-4 flex-1 min-w-0">
             {/* Logo Display */}
-            {startup.logo && (
+            {getField(startup, 'logo') && (
               <div className="w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-white rounded-xl p-2 shadow-lg">
                 <img 
-                  src={startup.logo} 
-                  alt={`${startup.companyName} logo`}
+                  src={getField(startup, 'logo')} 
+                  alt={`${getField(startup, 'companyName')} logo`}
                   className="w-full h-full object-contain rounded-lg"
                   onError={(e) => e.target.style.display = 'none'}
                 />
@@ -232,7 +236,7 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
             )}
             <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2 mb-3">
-                <h3 className="text-xl sm:text-2xl font-bold truncate">{startup.companyName}</h3>
+                <h3 className="text-xl sm:text-2xl font-bold truncate">{getField(startup, 'companyName')}</h3>
                 <span className={`px-2.5 py-1 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap ${getStatusColor(startup.status)}`}>
                   {startup.status}
                 </span>
@@ -241,9 +245,9 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
                 </span>
               </div>
               <div className="space-y-1 text-sm sm:text-base">
-                <p className="text-white/90 truncate">Magic Code: {startup.magicCode}</p>
-                <p className="text-white/90 truncate">Founder: {startup.founderName}</p>
-                <p className="text-white/80 text-xs sm:text-sm">{startup.city} • {startup.sector}</p>
+                <p className="text-white/90 truncate">Magic Code: {getField(startup, 'magicCode')}</p>
+                <p className="text-white/90 truncate">Founder: {getField(startup, 'founderName')}</p>
+                <p className="text-white/80 text-xs sm:text-sm">{getField(startup, 'city')} • {getField(startup, 'sector')}</p>
               </div>
             </div>
           </div>
@@ -509,27 +513,27 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
 
         <Section title="Startup Information" section="startup">
           {/* Logo and Office Photo Display */}
-          {(startup.logo || startup.officePhoto) && (
+          {(getField(startup, 'logo') || getField(startup, 'officePhoto')) && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              {startup.logo && (
+              {getField(startup, 'logo') && (
                 <div>
                   <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 block mb-2">Startup Logo</span>
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                     <img
-                      src={startup.logo}
-                      alt={`${startup.companyName} Logo`}
+                      src={getField(startup, 'logo')}
+                      alt={`${getField(startup, 'companyName')} Logo`}
                       className="max-h-32 mx-auto object-contain"
                     />
                   </div>
                 </div>
               )}
-              {startup.officePhoto && (
+              {getField(startup, 'officePhoto') && (
                 <div>
                   <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 block mb-2">Office Photo</span>
                   <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                     <img
-                      src={startup.officePhoto}
-                      alt={`${startup.companyName} Office`}
+                      src={getField(startup, 'officePhoto')}
+                      alt={`${getField(startup, 'companyName')} Office`}
                       className="max-h-32 w-full object-cover rounded"
                     />
                   </div>
@@ -539,34 +543,34 @@ export default function StartupCard({ startup, onUpdate, onDelete, isGuest = fal
           )}
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Magic Code" value={startup.magicCode} />
-            <Field label="Company Name" value={startup.companyName} />
-            <Field label="City" value={startup.city} />
-            <Field label="Sector" value={startup.sector} />
-            <Field label="Stage of Idea" value={startup.stageOfIdea} />
-            <Field label="Team Size" value={startup.teamSize} />
-            <Field label="Has Patent" value={startup.hasPatent} />
-            {startup.hasPatent === 'Yes' && <Field label="Patent Number" value={startup.patentNumber} />}
-            <Field label="Is Registered" value={startup.isRegistered} />
-            {startup.isRegistered === 'Yes' && <Field label="Registration Date" value={startup.registrationDate} />}
-            <Field label="Website" value={startup.website} />
-            <Field label="Social Media" value={startup.socialMedia} />
+            <Field label="Magic Code" value={getField(startup, 'magicCode')} />
+            <Field label="Company Name" value={getField(startup, 'companyName')} />
+            <Field label="City" value={getField(startup, 'city')} />
+            <Field label="Sector" value={getField(startup, 'sector')} />
+            <Field label="Stage of Idea" value={getField(startup, 'stageOfIdea')} />
+            <Field label="Team Size" value={getField(startup, 'teamSize')} />
+            <Field label="Has Patent" value={getField(startup, 'hasPatent')} />
+            {getField(startup, 'hasPatent') === 'Yes' && <Field label="Patent Number" value={getField(startup, 'patentNumber')} />}
+            <Field label="Is Registered" value={getField(startup, 'isRegistered')} />
+            {getField(startup, 'isRegistered') === 'Yes' && <Field label="Registration Date" value={getField(startup, 'registrationDate')} />}
+            <Field label="Website" value={getField(startup, 'website')} />
+            <Field label="Social Media" value={getField(startup, 'socialMedia')} />
           </div>
-          <Field label="Problem Solving" value={startup.problemSolving} />
-          <Field label="Solution" value={startup.solution} />
+          <Field label="Problem Solving" value={getField(startup, 'problemSolving')} />
+          <Field label="Solution" value={getField(startup, 'solution')} />
         </Section>
 
         <Section title="Founder Information" section="founder">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Founder Name" value={startup.founderName} />
-            <Field label="Age" value={startup.founderAge} />
-            <Field label="Gender" value={startup.founderGender} />
-            <Field label="College" value={startup.college} />
-            <Field label="Email" value={startup.email} />
-            <Field label="Mobile" value={startup.mobile} />
-            <Field label="Referred From" value={startup.referredFrom} />
+            <Field label="Founder Name" value={getField(startup, 'founderName')} />
+            <Field label="Age" value={getField(startup, 'founderAge')} />
+            <Field label="Gender" value={getField(startup, 'founderGender')} />
+            <Field label="College" value={getField(startup, 'college')} />
+            <Field label="Email" value={getField(startup, 'founderEmail')} />
+            <Field label="Mobile" value={getField(startup, 'founderMobile')} />
+            <Field label="Referred From" value={getField(startup, 'referredFrom')} />
           </div>
-          <Field label="Address" value={startup.address} />
+          <Field label="Address" value={getField(startup, 'address')} />
         </Section>
 
         <Section title="Registration Info" section="registration">

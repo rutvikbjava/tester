@@ -1,5 +1,5 @@
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { storage } from './storage';
 
 // Helper function to format date
@@ -33,6 +33,16 @@ export const exportStartupsToPDF = (startups, title = 'Startups Report') => {
   try {
     const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
     
+    // Helper function to safely get field value
+    const getField = (obj, ...fields) => {
+      for (const field of fields) {
+        if (obj && obj[field] !== undefined && obj[field] !== null && obj[field] !== '') {
+          return obj[field];
+        }
+      }
+      return '';
+    };
+    
     // Add title
     doc.setFontSize(18);
     doc.setTextColor(40);
@@ -44,24 +54,24 @@ export const exportStartupsToPDF = (startups, title = 'Startups Report') => {
     doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
     doc.text(`Total Startups: ${startups.length}`, 14, 27);
     
-    // Prepare table data
+    // Prepare table data - handle both field name variations
     const tableData = startups.map(s => {
-      const totalRevenue = s.totalRevenue || (s.revenueHistory?.reduce((sum, r) => sum + (r.amount || 0), 0)) || 0;
+      const totalRevenue = s.totalRevenue || s.revenueGenerated || (s.revenueHistory?.reduce((sum, r) => sum + (r.amount || 0), 0)) || 0;
       return [
-        s.magicCode || '',
-        s.companyName || '',
-        s.founderName || '',
-        s.city || '',
-        s.sector || '',
-        s.stage || '',
-        s.status || '',
+        getField(s, 'magicCode'),
+        getField(s, 'companyName', 'name'),
+        getField(s, 'founderName', 'founder'),
+        getField(s, 'city'),
+        getField(s, 'sector'),
+        getField(s, 'stage'),
+        getField(s, 'status'),
         (s.achievements?.length || 0),
-        `₹${totalRevenue.toLocaleString()}`
+        totalRevenue > 0 ? `₹${totalRevenue.toLocaleString()}` : '₹0'
       ];
     });
     
     // Add table
-    doc.autoTable({
+    autoTable(doc, {
       startY: 32,
       head: [['Magic Code', 'Company', 'Founder', 'City', 'Sector', 'Stage', 'Status', 'Achievements', 'Revenue']],
       body: tableData,
@@ -92,74 +102,102 @@ export const exportStartupsToPDF = (startups, title = 'Startups Report') => {
 };
 
 export const exportDetailedStartupPDF = (startup) => {
-  const doc = new jsPDF();
-  let yPos = 20;
-  
-  // Title
-  doc.setFontSize(20);
-  doc.setTextColor(79, 70, 229);
-  doc.text(startup.companyName || 'Startup Details', 14, yPos);
-  yPos += 10;
-  
-  // Magic Code
-  doc.setFontSize(12);
-  doc.setTextColor(100);
-  doc.text(`Magic Code: ${startup.magicCode || 'N/A'}`, 14, yPos);
-  yPos += 8;
-  
-  // Basic Information
-  doc.setFontSize(14);
-  doc.setTextColor(40);
-  doc.text('Basic Information', 14, yPos);
-  yPos += 8;
-  
-  doc.setFontSize(10);
-  doc.setTextColor(60);
-  const basicInfo = [
-    `Founder: ${startup.founderName || 'N/A'}`,
-    `Email: ${startup.founderEmail || 'N/A'}`,
-    `Mobile: ${startup.founderMobile || 'N/A'}`,
-    `City: ${startup.city || 'N/A'}`,
-    `Sector: ${startup.sector || 'N/A'}`,
-    `Domain: ${startup.domain || 'N/A'}`,
-    `Stage: ${startup.stage || 'N/A'}`,
-    `Status: ${startup.status || 'N/A'}`,
-    `Team Size: ${startup.teamSize || 'N/A'}`
-  ];
-  
-  basicInfo.forEach(info => {
-    doc.text(info, 14, yPos);
-    yPos += 6;
-  });
-  
-  yPos += 5;
-  
-  // Problem & Solution
-  if (startup.problemSolving || startup.solution) {
+  try {
+    const doc = new jsPDF();
+    let yPos = 20;
+    
+    // Helper function to safely get field value (handles both field name variations)
+    const getField = (obj, ...fields) => {
+      for (const field of fields) {
+        if (obj && obj[field] !== undefined && obj[field] !== null && obj[field] !== '') {
+          return obj[field];
+        }
+      }
+      return 'N/A';
+    };
+    
+    // Title - handle both companyName and name
+    const companyName = getField(startup, 'companyName', 'name');
+    doc.setFontSize(20);
+    doc.setTextColor(79, 70, 229);
+    doc.text(companyName !== 'N/A' ? companyName : 'Startup Details', 14, yPos);
+    yPos += 10;
+    
+    // Magic Code
+    doc.setFontSize(12);
+    doc.setTextColor(100);
+    doc.text(`Magic Code: ${getField(startup, 'magicCode')}`, 14, yPos);
+    yPos += 8;
+    
+    // Basic Information
     doc.setFontSize(14);
     doc.setTextColor(40);
-    doc.text('Problem & Solution', 14, yPos);
+    doc.text('Basic Information', 14, yPos);
     yPos += 8;
     
     doc.setFontSize(10);
     doc.setTextColor(60);
+    const basicInfo = [
+      `Founder: ${getField(startup, 'founderName', 'founder')}`,
+      `Email: ${getField(startup, 'founderEmail', 'email')}`,
+      `Mobile: ${getField(startup, 'founderMobile', 'phone')}`,
+      `City: ${getField(startup, 'city')}`,
+      `Sector: ${getField(startup, 'sector')}`,
+      `Domain: ${getField(startup, 'domain')}`,
+      `Stage: ${getField(startup, 'stage')}`,
+      `Status: ${getField(startup, 'status')}`,
+      `Team Size: ${getField(startup, 'teamSize')}`
+    ];
     
-    if (startup.problemSolving) {
-      doc.text('Problem:', 14, yPos);
+    basicInfo.forEach(info => {
+      if (yPos > 270) {
+        doc.addPage();
+        yPos = 20;
+      }
+      doc.text(info, 14, yPos);
       yPos += 6;
-      const problemLines = doc.splitTextToSize(startup.problemSolving, 180);
-      doc.text(problemLines, 14, yPos);
-      yPos += problemLines.length * 5 + 5;
-    }
+    });
     
-    if (startup.solution) {
-      doc.text('Solution:', 14, yPos);
-      yPos += 6;
-      const solutionLines = doc.splitTextToSize(startup.solution, 180);
-      doc.text(solutionLines, 14, yPos);
-      yPos += solutionLines.length * 5 + 5;
+    yPos += 5;
+    
+    // Problem & Solution
+    const problem = getField(startup, 'problemSolving', 'problem');
+    const solution = getField(startup, 'solution');
+    
+    if (problem !== 'N/A' || solution !== 'N/A') {
+      if (yPos > 250) {
+        doc.addPage();
+        yPos = 20;
+      }
+      
+      doc.setFontSize(14);
+      doc.setTextColor(40);
+      doc.text('Problem & Solution', 14, yPos);
+      yPos += 8;
+      
+      doc.setFontSize(10);
+      doc.setTextColor(60);
+      
+      if (problem !== 'N/A') {
+        doc.text('Problem:', 14, yPos);
+        yPos += 6;
+        const problemLines = doc.splitTextToSize(problem, 180);
+        doc.text(problemLines, 14, yPos);
+        yPos += problemLines.length * 5 + 5;
+      }
+      
+      if (solution !== 'N/A') {
+        if (yPos > 260) {
+          doc.addPage();
+          yPos = 20;
+        }
+        doc.text('Solution:', 14, yPos);
+        yPos += 6;
+        const solutionLines = doc.splitTextToSize(solution, 180);
+        doc.text(solutionLines, 14, yPos);
+        yPos += solutionLines.length * 5 + 5;
+      }
     }
-  }
   
   // Achievements
   if (startup.achievements && startup.achievements.length > 0) {
@@ -221,7 +259,7 @@ export const exportDetailedStartupPDF = (startup) => {
       r.description || ''
     ]);
     
-    doc.autoTable({
+    autoTable(doc, {
       startY: yPos,
       head: [['Date', 'Source', 'Amount', 'Description']],
       body: revenueData,
@@ -232,106 +270,132 @@ export const exportDetailedStartupPDF = (startup) => {
   }
   
   // Save PDF
-  doc.save(`MAGIC-${startup.companyName?.replace(/\s+/g, '-')}-Details-${new Date().toISOString().split('T')[0]}.pdf`);
+    const fileName = getField(startup, 'companyName', 'name');
+    doc.save(`MAGIC-${fileName !== 'N/A' ? fileName.replace(/\s+/g, '-') : 'Startup'}-Details-${new Date().toISOString().split('T')[0]}.pdf`);
+    return true;
+  } catch (error) {
+    console.error('Error exporting detailed PDF:', error);
+    alert('Error exporting PDF. Please try again.');
+    return false;
+  }
 };
 
-export const exportSMCSchedulesToPDF = () => {
-  const schedules = storage.get('smcSchedules', []);
-  const startups = storage.get('startups', []);
+export const exportSMCSchedulesToPDF = (schedules = null, startups = null) => {
+  // Try to get data from parameters first, then fallback to localStorage
+  const smcData = schedules || storage.get('smcSchedules', []);
+  const startupsData = startups || storage.get('startups', []);
   
-  if (schedules.length === 0) {
+  if (smcData.length === 0) {
     alert('No SMC schedules to export');
     return;
   }
   
-  const doc = new jsPDF('l', 'mm', 'a4');
-  
-  doc.setFontSize(18);
-  doc.text('SMC Schedules Report', 14, 15);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
-  doc.text(`Total Schedules: ${schedules.length}`, 14, 27);
-  
-  const tableData = schedules.map(schedule => {
-    const startup = startups.find(s => s.id === schedule.startupId);
-    return [
-      formatDate(schedule.date),
-      schedule.timeSlot || '',
-      startup?.companyName || 'Unknown',
-      startup?.magicCode || '',
-      schedule.status || '',
-      schedule.completionData?.panelistName || '',
-      schedule.completionData?.feedback?.substring(0, 50) || ''
-    ];
-  });
-  
-  doc.autoTable({
-    startY: 32,
-    head: [['Date', 'Time', 'Company', 'Magic Code', 'Status', 'Panelist', 'Feedback']],
-    body: tableData,
-    theme: 'striped',
-    headStyles: { fillColor: [79, 70, 229] },
-    styles: { fontSize: 8, cellPadding: 2 }
-  });
-  
-  doc.save(`MAGIC-SMC-Schedules-${new Date().toISOString().split('T')[0]}.pdf`);
+  try {
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text('SMC Schedules Report', 14, 15);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
+    doc.text(`Total Schedules: ${smcData.length}`, 14, 27);
+    
+    const tableData = smcData.map(schedule => {
+      const startup = startupsData.find(s => s.id === schedule.startupId);
+      return [
+        formatDate(schedule.date),
+        schedule.timeSlot || schedule.time || '',
+        startup?.name || startup?.companyName || 'Unknown',
+        startup?.magicCode || '',
+        schedule.status || '',
+        schedule.attendees || schedule.completionData?.panelistName || '',
+        (schedule.agenda || schedule.completionData?.feedback || '').substring(0, 50)
+      ];
+    });
+    
+    autoTable(doc, {
+      startY: 32,
+      head: [['Date', 'Time', 'Company', 'Magic Code', 'Status', 'Attendees', 'Agenda']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [79, 70, 229] },
+      styles: { fontSize: 8, cellPadding: 2 }
+    });
+    
+    doc.save(`MAGIC-SMC-Schedules-${new Date().toISOString().split('T')[0]}.pdf`);
+    return true;
+  } catch (error) {
+    console.error('Error exporting SMC PDF:', error);
+    alert('Error exporting PDF. Please try again.');
+    return false;
+  }
 };
 
-export const exportOneOnOneSessionsToPDF = () => {
-  const sessions = storage.get('oneOnOneSchedules', []);
-  const startups = storage.get('startups', []);
+export const exportOneOnOneSessionsToPDF = (sessions = null, startups = null) => {
+  // Try to get data from parameters first, then fallback to localStorage
+  const sessionsData = sessions || storage.get('oneOnOneSchedules', []);
+  const startupsData = startups || storage.get('startups', []);
   
-  if (sessions.length === 0) {
+  if (sessionsData.length === 0) {
     alert('No One-on-One sessions to export');
     return;
   }
   
-  const doc = new jsPDF('l', 'mm', 'a4');
-  
-  doc.setFontSize(18);
-  doc.text('One-on-One Sessions Report', 14, 15);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
-  doc.text(`Total Sessions: ${sessions.length}`, 14, 27);
-  
-  const tableData = sessions.map(session => {
-    const startup = startups.find(s => s.id === session.startupId);
-    return [
-      formatDate(session.date),
-      session.time || '',
-      startup?.companyName || 'Unknown',
-      startup?.magicCode || '',
-      session.status || '',
-      session.completionData?.mentorName || '',
-      session.completionData?.progress || ''
-    ];
-  });
-  
-  doc.autoTable({
-    startY: 32,
-    head: [['Date', 'Time', 'Company', 'Magic Code', 'Status', 'Mentor', 'Progress']],
-    body: tableData,
-    theme: 'striped',
-    headStyles: { fillColor: [99, 102, 241] },
-    styles: { fontSize: 8, cellPadding: 2 }
-  });
-  
-  doc.save(`MAGIC-OneOnOne-Sessions-${new Date().toISOString().split('T')[0]}.pdf`);
+  try {
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text('One-on-One Sessions Report', 14, 15);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
+    doc.text(`Total Sessions: ${sessionsData.length}`, 14, 27);
+    
+    const tableData = sessionsData.map(session => {
+      const startup = startupsData.find(s => s.id === session.startupId);
+      return [
+        formatDate(session.date),
+        session.time || '',
+        startup?.name || startup?.companyName || 'Unknown',
+        startup?.magicCode || '',
+        session.status || '',
+        session.mentor || session.completionData?.mentorName || '',
+        session.topic || session.completionData?.progress || ''
+      ];
+    });
+    
+    autoTable(doc, {
+      startY: 32,
+      head: [['Date', 'Time', 'Company', 'Magic Code', 'Status', 'Mentor', 'Topic']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [99, 102, 241] },
+      styles: { fontSize: 8, cellPadding: 2 }
+    });
+    
+    doc.save(`MAGIC-OneOnOne-Sessions-${new Date().toISOString().split('T')[0]}.pdf`);
+    return true;
+  } catch (error) {
+    console.error('Error exporting One-on-One PDF:', error);
+    alert('Error exporting PDF. Please try again.');
+    return false;
+  }
 };
 
-export const exportAchievementsToPDF = () => {
-  const startups = storage.get('startups', []);
+export const exportAchievementsToPDF = (startups = null) => {
+  // Try to get data from parameters first, then fallback to localStorage
+  const startupsData = startups || storage.get('startups', []);
   const achievementsData = [];
   
-  startups.forEach(startup => {
+  startupsData.forEach(startup => {
     if (startup.achievements && startup.achievements.length > 0) {
       startup.achievements.forEach(ach => {
         achievementsData.push({
-          company: startup.companyName,
+          company: startup.name || startup.companyName,
           magicCode: startup.magicCode,
           title: ach.title,
           description: ach.description,
@@ -347,46 +411,69 @@ export const exportAchievementsToPDF = () => {
     return;
   }
   
-  const doc = new jsPDF('l', 'mm', 'a4');
-  
-  doc.setFontSize(18);
-  doc.text('Achievements Report', 14, 15);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
-  doc.text(`Total Achievements: ${achievementsData.length}`, 14, 27);
-  
-  const tableData = achievementsData.map(ach => [
-    ach.magicCode || '',
-    ach.company || '',
-    ach.title || '',
-    ach.type || '',
-    formatDate(ach.date),
-    (ach.description || '').substring(0, 60)
-  ]);
-  
-  doc.autoTable({
-    startY: 32,
-    head: [['Magic Code', 'Company', 'Achievement', 'Type', 'Date', 'Description']],
-    body: tableData,
-    theme: 'striped',
-    headStyles: { fillColor: [234, 179, 8] },
-    styles: { fontSize: 8, cellPadding: 2 }
-  });
-  
-  doc.save(`MAGIC-Achievements-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+  try {
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text('Achievements Report', 14, 15);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
+    doc.text(`Total Achievements: ${achievementsData.length}`, 14, 27);
+    
+    const tableData = achievementsData.map(ach => [
+      ach.magicCode || '',
+      ach.company || '',
+      ach.title || '',
+      ach.type || '',
+      formatDate(ach.date),
+      (ach.description || '').substring(0, 60)
+    ]);
+    
+    autoTable(doc, {
+      startY: 32,
+      head: [['Magic Code', 'Company', 'Achievement', 'Type', 'Date', 'Description']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [234, 179, 8] },
+      styles: { fontSize: 8, cellPadding: 2 }
+    });
+    
+    doc.save(`MAGIC-Achievements-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+    return true;
+  } catch (error) {
+    console.error('Error exporting Achievements PDF:', error);
+    alert('Error exporting PDF. Please try again.');
+    return false;
+  }
 };
 
-export const exportRevenueToPDF = () => {
-  const startups = storage.get('startups', []);
+export const exportRevenueToPDF = (startups = null) => {
+  // Try to get data from parameters first, then fallback to localStorage
+  const startupsData = startups || storage.get('startups', []);
   const revenueData = [];
   
-  startups.forEach(startup => {
+  startupsData.forEach(startup => {
+    // Check for revenueGenerated field (database) or revenueHistory (localStorage)
+    const revenue = startup.revenueGenerated || 0;
+    if (revenue > 0) {
+      revenueData.push({
+        company: startup.name || startup.companyName,
+        magicCode: startup.magicCode,
+        sector: startup.sector,
+        amount: revenue,
+        source: 'Total Revenue',
+        date: startup.onboardedDate || new Date()
+      });
+    }
+    
+    // Also check revenueHistory if it exists
     if (startup.revenueHistory && startup.revenueHistory.length > 0) {
       startup.revenueHistory.forEach(rev => {
         revenueData.push({
-          company: startup.companyName,
+          company: startup.name || startup.companyName,
           magicCode: startup.magicCode,
           sector: startup.sector,
           amount: rev.amount,
@@ -402,41 +489,49 @@ export const exportRevenueToPDF = () => {
     return;
   }
   
-  const totalRevenue = revenueData.reduce((sum, r) => sum + (r.amount || 0), 0);
-  
-  const doc = new jsPDF('l', 'mm', 'a4');
-  
-  doc.setFontSize(18);
-  doc.text('Revenue Report', 14, 15);
-  
-  doc.setFontSize(10);
-  doc.setTextColor(100);
-  doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
-  doc.text(`Total Revenue: ₹${totalRevenue.toLocaleString()}`, 14, 27);
-  doc.text(`Total Entries: ${revenueData.length}`, 14, 32);
-  
-  const tableData = revenueData.map(rev => [
-    rev.magicCode || '',
-    rev.company || '',
-    rev.sector || '',
-    formatDate(rev.date),
-    rev.source || '',
-    `₹${(rev.amount || 0).toLocaleString()}`
-  ]);
-  
-  doc.autoTable({
-    startY: 37,
-    head: [['Magic Code', 'Company', 'Sector', 'Date', 'Source', 'Amount']],
-    body: tableData,
-    theme: 'striped',
-    headStyles: { fillColor: [16, 185, 129] },
-    styles: { fontSize: 8, cellPadding: 2 },
-    columnStyles: {
-      5: { halign: 'right' }
-    }
-  });
-  
-  doc.save(`MAGIC-Revenue-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+  try {
+    const totalRevenue = revenueData.reduce((sum, r) => sum + (r.amount || 0), 0);
+    
+    const doc = new jsPDF('l', 'mm', 'a4');
+    
+    doc.setFontSize(18);
+    doc.setTextColor(40);
+    doc.text('Revenue Report', 14, 15);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Generated: ${formatDate(new Date())}`, 14, 22);
+    doc.text(`Total Revenue: ₹${totalRevenue.toLocaleString()}`, 14, 27);
+    doc.text(`Total Entries: ${revenueData.length}`, 14, 32);
+    
+    const tableData = revenueData.map(rev => [
+      rev.magicCode || '',
+      rev.company || '',
+      rev.sector || '',
+      formatDate(rev.date),
+      rev.source || '',
+      `₹${(rev.amount || 0).toLocaleString()}`
+    ]);
+    
+    autoTable(doc, {
+      startY: 37,
+      head: [['Magic Code', 'Company', 'Sector', 'Date', 'Source', 'Amount']],
+      body: tableData,
+      theme: 'striped',
+      headStyles: { fillColor: [16, 185, 129] },
+      styles: { fontSize: 8, cellPadding: 2 },
+      columnStyles: {
+        5: { halign: 'right' }
+      }
+    });
+    
+    doc.save(`MAGIC-Revenue-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+    return true;
+  } catch (error) {
+    console.error('Error exporting Revenue PDF:', error);
+    alert('Error exporting PDF. Please try again.');
+    return false;
+  }
 };
 
 // ==================== CSV/EXCEL EXPORTS ====================

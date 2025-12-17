@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { storage } from './storage';
+import { getField } from './startupFieldHelper';
 
 // Helper function to format date
 const formatDate = (date) => {
@@ -37,12 +38,12 @@ export const generateStartupReport = (startup) => {
 
   doc.setFontSize(18);
   doc.setTextColor(40);
-  doc.text(startup.companyName || 'Startup Report', 105, yPos, { align: 'center' });
+  doc.text(getField(startup, 'companyName') || 'Startup Report', 105, yPos, { align: 'center' });
   yPos += 10;
 
   doc.setFontSize(12);
   doc.setTextColor(100);
-  doc.text(`Magic Code: ${startup.magicCode || 'N/A'}`, 105, yPos, { align: 'center' });
+  doc.text(`Magic Code: ${getField(startup, 'magicCode') || 'N/A'}`, 105, yPos, { align: 'center' });
   yPos += 8;
 
   doc.text(`Generated: ${formatDate(new Date())}`, 105, yPos, { align: 'center' });
@@ -58,16 +59,16 @@ export const generateStartupReport = (startup) => {
   doc.setFontSize(10);
   doc.setTextColor(60);
   const basicInfo = [
-    ['Company Name', startup.companyName || 'N/A'],
-    ['Founder Name', startup.founderName || 'N/A'],
-    ['Email', startup.founderEmail || startup.email || 'N/A'],
-    ['Mobile', startup.founderMobile || startup.mobile || 'N/A'],
-    ['City', startup.city || 'N/A'],
-    ['Sector', startup.sector || 'N/A'],
-    ['Domain', startup.domain || 'N/A'],
+    ['Company Name', getField(startup, 'companyName') || 'N/A'],
+    ['Founder Name', getField(startup, 'founderName') || 'N/A'],
+    ['Email', getField(startup, 'founderEmail') || 'N/A'],
+    ['Mobile', getField(startup, 'founderMobile') || 'N/A'],
+    ['City', getField(startup, 'city') || 'N/A'],
+    ['Sector', getField(startup, 'sector') || 'N/A'],
+    ['Domain', getField(startup, 'domain') || 'N/A'],
     ['Stage', startup.stage || 'N/A'],
     ['Status', startup.status || 'N/A'],
-    ['Team Size', startup.teamSize || 'N/A']
+    ['Team Size', getField(startup, 'teamSize') || 'N/A']
   ];
 
   basicInfo.forEach(([label, value]) => {
@@ -82,7 +83,10 @@ export const generateStartupReport = (startup) => {
   yPos += 5;
 
   // === PROBLEM & SOLUTION ===
-  if (startup.problemSolving || startup.solution) {
+  const problemText = getField(startup, 'problemSolving');
+  const solutionText = getField(startup, 'solution');
+  
+  if (problemText || solutionText) {
     checkPageBreak(30);
     doc.setFontSize(16);
     doc.setTextColor(79, 70, 229);
@@ -90,12 +94,12 @@ export const generateStartupReport = (startup) => {
     yPos += 10;
 
     doc.setFontSize(10);
-    if (startup.problemSolving) {
+    if (problemText) {
       doc.setTextColor(100);
       doc.text('Problem:', 14, yPos);
       yPos += 6;
       doc.setTextColor(40);
-      const problemLines = doc.splitTextToSize(startup.problemSolving, 180);
+      const problemLines = doc.splitTextToSize(problemText, 180);
       problemLines.forEach(line => {
         checkPageBreak();
         doc.text(line, 14, yPos);
@@ -104,13 +108,13 @@ export const generateStartupReport = (startup) => {
       yPos += 3;
     }
 
-    if (startup.solution) {
+    if (solutionText) {
       checkPageBreak(10);
       doc.setTextColor(100);
       doc.text('Solution:', 14, yPos);
       yPos += 6;
       doc.setTextColor(40);
-      const solutionLines = doc.splitTextToSize(startup.solution, 180);
+      const solutionLines = doc.splitTextToSize(solutionText, 180);
       solutionLines.forEach(line => {
         checkPageBreak();
         doc.text(line, 14, yPos);
@@ -320,7 +324,8 @@ export const generateStartupReport = (startup) => {
   }
 
   // Save PDF
-  doc.save(`MAGIC-${startup.companyName?.replace(/\s+/g, '-')}-Comprehensive-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+  const companyName = getField(startup, 'companyName') || 'Startup';
+  doc.save(`MAGIC-${companyName.replace(/\s+/g, '-')}-Comprehensive-Report-${new Date().toISOString().split('T')[0]}.pdf`);
 };
 
 // Generate Word document (HTML-based)
@@ -328,13 +333,25 @@ export const generateStartupReportWord = (startup) => {
   const totalRevenue = startup.revenueHistory?.reduce((sum, r) => sum + (r.amount || 0), 0) || 0;
   const smcSchedules = storage.get('smcSchedules', []).filter(s => s.startupId === startup.id && s.status === 'Completed');
   const oneOnOneSchedules = storage.get('oneOnOneSchedules', []).filter(s => s.startupId === startup.id && s.status === 'Completed');
+  
+  const companyName = getField(startup, 'companyName') || 'Startup';
+  const founderName = getField(startup, 'founderName') || 'N/A';
+  const founderEmail = getField(startup, 'founderEmail') || 'N/A';
+  const founderMobile = getField(startup, 'founderMobile') || 'N/A';
+  const city = getField(startup, 'city') || 'N/A';
+  const sector = getField(startup, 'sector') || 'N/A';
+  const domain = getField(startup, 'domain') || 'N/A';
+  const teamSize = getField(startup, 'teamSize') || 'N/A';
+  const magicCode = getField(startup, 'magicCode') || 'N/A';
+  const problemText = getField(startup, 'problemSolving') || '';
+  const solutionText = getField(startup, 'solution') || '';
 
   const html = `
 <!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>${startup.companyName} - Comprehensive Report</title>
+  <title>${companyName} - Comprehensive Report</title>
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; padding: 40px; }
     h1 { color: #4F46E5; text-align: center; border-bottom: 3px solid #4F46E5; padding-bottom: 10px; }
@@ -356,8 +373,8 @@ export const generateStartupReportWord = (startup) => {
 </head>
 <body>
   <h1>STARTUP COMPREHENSIVE REPORT</h1>
-  <h2 style="text-align: center; color: #111827;">${startup.companyName || 'Startup Report'}</h2>
-  <p style="text-align: center; color: #6B7280;">Magic Code: ${startup.magicCode || 'N/A'} | Generated: ${formatDate(new Date())}</p>
+  <h2 style="text-align: center; color: #111827;">${companyName}</h2>
+  <p style="text-align: center; color: #6B7280;">Magic Code: ${magicCode} | Generated: ${formatDate(new Date())}</p>
 
   <div style="text-align: center; margin: 30px 0;">
     <div class="stat-box">
@@ -376,22 +393,22 @@ export const generateStartupReportWord = (startup) => {
 
   <h2>BASIC INFORMATION</h2>
   <div class="info-grid">
-    <div class="info-label">Company Name:</div><div class="info-value">${startup.companyName || 'N/A'}</div>
-    <div class="info-label">Founder Name:</div><div class="info-value">${startup.founderName || 'N/A'}</div>
-    <div class="info-label">Email:</div><div class="info-value">${startup.founderEmail || startup.email || 'N/A'}</div>
-    <div class="info-label">Mobile:</div><div class="info-value">${startup.founderMobile || startup.mobile || 'N/A'}</div>
-    <div class="info-label">City:</div><div class="info-value">${startup.city || 'N/A'}</div>
-    <div class="info-label">Sector:</div><div class="info-value">${startup.sector || 'N/A'}</div>
-    <div class="info-label">Domain:</div><div class="info-value">${startup.domain || 'N/A'}</div>
+    <div class="info-label">Company Name:</div><div class="info-value">${companyName}</div>
+    <div class="info-label">Founder Name:</div><div class="info-value">${founderName}</div>
+    <div class="info-label">Email:</div><div class="info-value">${founderEmail}</div>
+    <div class="info-label">Mobile:</div><div class="info-value">${founderMobile}</div>
+    <div class="info-label">City:</div><div class="info-value">${city}</div>
+    <div class="info-label">Sector:</div><div class="info-value">${sector}</div>
+    <div class="info-label">Domain:</div><div class="info-value">${domain}</div>
     <div class="info-label">Stage:</div><div class="info-value">${startup.stage || 'N/A'}</div>
     <div class="info-label">Status:</div><div class="info-value">${startup.status || 'N/A'}</div>
-    <div class="info-label">Team Size:</div><div class="info-value">${startup.teamSize || 'N/A'}</div>
+    <div class="info-label">Team Size:</div><div class="info-value">${teamSize}</div>
   </div>
 
-  ${startup.problemSolving || startup.solution ? `
+  ${problemText || solutionText ? `
   <h2>PROBLEM & SOLUTION</h2>
-  ${startup.problemSolving ? `<h3>Problem</h3><p>${startup.problemSolving}</p>` : ''}
-  ${startup.solution ? `<h3>Solution</h3><p>${startup.solution}</p>` : ''}
+  ${problemText ? `<h3>Problem</h3><p>${problemText}</p>` : ''}
+  ${solutionText ? `<h3>Solution</h3><p>${solutionText}</p>` : ''}
   ` : ''}
 
   ${startup.achievements && startup.achievements.length > 0 ? `
@@ -475,7 +492,7 @@ export const generateStartupReportWord = (startup) => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `MAGIC-${startup.companyName?.replace(/\s+/g, '-')}-Comprehensive-Report-${new Date().toISOString().split('T')[0]}.doc`;
+  a.download = `MAGIC-${companyName.replace(/\s+/g, '-')}-Comprehensive-Report-${new Date().toISOString().split('T')[0]}.doc`;
   a.click();
   URL.revokeObjectURL(url);
 };

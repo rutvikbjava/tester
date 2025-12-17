@@ -62,7 +62,7 @@ export default function AdminAuthModal({
       }
 
       // Verify admin credentials
-      const response = await fetch('http://localhost:5000/api/auth/verify-admin', {
+      const response = await fetch('/api/auth/verify-admin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

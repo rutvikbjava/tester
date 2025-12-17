@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { storage } from '../utils/storage';
 import MagicBackground from './MagicBackground';
-import SmokeyCursor from '@/components/ui/smokey-cursor';
+import SmokeyCursor from './ui/smokey-cursor';
 
 const LandingPage = ({ onNavigateToLogin }) => {
   const [landingData, setLandingData] = useState(null);
@@ -117,7 +117,7 @@ const LandingPage = ({ onNavigateToLogin }) => {
               whileHover={{ scale: 1.05 }}
             >
               <img 
-                src="/ui_magic/magic_icon.png" 
+                src="/magic_icon.png" 
                 alt="MAGIC Logo" 
                 className="h-12 w-12 object-contain"
               />
@@ -621,7 +621,7 @@ const LandingPage = ({ onNavigateToLogin }) => {
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
               <img 
-                src="/ui_magic/magic_icon.png" 
+                src="/magic_icon.png" 
                 alt="MAGIC Logo" 
                 className="h-10 w-10 object-contain"
               />

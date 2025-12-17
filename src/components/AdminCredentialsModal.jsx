@@ -69,7 +69,7 @@ export default function AdminCredentialsModal({ isOpen, onClose, currentUser }) 
         return;
       }
 
-      const response = await fetch('http://localhost:5000/api/auth/update-admin-credentials', {
+      const response = await fetch('/api/auth/update-admin-credentials', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

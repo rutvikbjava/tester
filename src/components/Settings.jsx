@@ -82,7 +82,8 @@ export default function Settings({ darkMode, toggleDarkMode, isGuest = false }) 
         return;
       }
       
-      const response = await fetch('http://localhost:5000/api/migration/status', {
+      // Use Next.js API route instead of Express
+      const response = await fetch('/api/startups/stats/overview', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -90,7 +91,13 @@ export default function Settings({ darkMode, toggleDarkMode, isGuest = false }) 
       
       if (response.ok) {
         const data = await response.json();
-        setDbStats(data.database);
+        // Map the stats data to match expected format
+        setDbStats({
+          startups: data.total || 0,
+          users: 1, // We have at least admin user
+          meetings: 0,
+          achievements: 0
+        });
       }
     } catch (error) {
       console.error('Error fetching database stats:', error);
@@ -124,16 +131,9 @@ export default function Settings({ darkMode, toggleDarkMode, isGuest = false }) 
         version: '1.0.0'
       };
 
-      // Send to backend for migration
-      const token = localStorage.getItem('authToken');
-      const response = await fetch('http://localhost:5000/api/migration/migrate-localstorage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(localData)
-      });
+      // Migration is no longer needed as we're using PostgreSQL directly
+      alert('⚠️ Migration feature is deprecated.\n\nThe system now uses PostgreSQL database directly.\nAll data is already in the database.');
+      return;
 
       const result = await response.json();
 

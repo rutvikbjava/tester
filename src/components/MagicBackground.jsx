@@ -5,7 +5,7 @@ const MagicBackground = ({ children, className = '' }) => {
       <div 
         className="fixed inset-0 z-0"
         style={{
-          backgroundImage: 'url(/ui_magic/magic_back_canva.png)',
+          backgroundImage: 'url(/magic_back_canva.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
